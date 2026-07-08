@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>算法过程可视化系统</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ==================== 顶部导航栏 ==================== -->
+<header class="topbar">
+    <div class="topbar-left">
+        <h1>🔬 算法过程可视化系统</h1>
+    </div>
+    <div class="topbar-center">
+        <nav class="main-nav">
+            <button class="nav-btn active" data-view="visualizer">可视化</button>
+            <button class="nav-btn" data-view="compare">算法对比</button>
+            <button class="nav-btn" data-view="knowledge">知识库</button>
+            <button class="nav-btn" data-view="history">执行日志</button>
+        </nav>
+    </div>
+    <div class="topbar-right">
+        <span class="user-info" id="userDisplay">👤 <span id="usernameDisplay"></span></span>
+        <button class="btn btn-sm btn-outline" id="logoutBtn">退出</button>
+    </div>
+</header>
+
+<!-- ==================== 主布局 ==================== -->
+<div class="main-container">
+
+    <!-- ===== 左侧边栏：算法选择 ===== -->
+    <aside class="sidebar sidebar-left" id="sidebarLeft">
+        <div class="sidebar-section">
+            <h3>📂 算法列表</h3>
+            <div class="algo-list" id="algoList">
+                <!-- 动态填充 -->
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>📥 输入数据</h3>
+            <div id="inputPanel">
+                <!-- 动态填充 -->
+            </div>
+            <button class="btn btn-primary btn-full" id="btnRunSidebar" style="margin-top:10px;padding:12px;font-size:15px;font-weight:600;">
+                🚀 开始运行
+            </button>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>🧪 测试用例</h3>
+            <div class="test-case-list" id="testCaseList">
+                <!-- 动态填充 -->
+            </div>
+            <div class="sidebar-actions">
+                <button class="btn btn-sm btn-outline" id="randomDataBtn">🎲 随机数据</button>
+                <button class="btn btn-sm btn-outline" id="saveTestCaseBtn">💾 保存数据</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ===== 中间：可视化主区域 ===== -->
+    <main class="visualization-area" id="visualizationArea">
+
+        <!-- 算法信息条 -->
+        <div class="algo-info-bar" id="algoInfoBar">
+            <div class="algo-name" id="algoNameDisplay">请选择算法</div>
+            <div class="algo-complexity">
+                <span class="badge badge-time" id="timeBadge">时间复杂度: -</span>
+                <span class="badge badge-space" id="spaceBadge">空间复杂度: -</span>
+                <span class="badge badge-difficulty" id="diffBadge">难度: -</span>
+            </div>
+        </div>
+
+        <!-- 可视化画布 -->
+        <div class="viz-canvas" id="vizCanvas">
+            <div class="viz-placeholder" id="vizPlaceholder">
+                <div class="placeholder-icon">🎯</div>
+                <p>请选择一个算法并点击"开始运行"</p>
+                <p class="placeholder-sub">系统将展示算法的每一步执行过程</p>
+            </div>
+            <svg id="vizSvg" class="viz-svg" style="display:none;"></svg>
+            <div id="vizArray" class="viz-array" style="display:none;"></div>
+            <div id="vizTree" class="viz-tree" style="display:none;"></div>
+            <div id="vizGraph" class="viz-graph" style="display:none;"></div>
+            <div id="vizHanoi" class="viz-hanoi" style="display:none;"></div>
+        </div>
+
+        <!-- 执行状态 & 进度 -->
+        <div class="execution-status" id="executionStatus">
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="status-text">
+                <span id="stepCounter">步骤: 0 / 0</span>
+                <span id="executionTime">执行耗时: -</span>
+            </div>
+        </div>
+
+        <!-- 步骤说明面板 -->
+        <div class="step-description-panel" id="stepDescriptionPanel">
+            <div class="panel-header">
+                <h4>📝 当前步骤说明</h4>
+                <label class="tutorial-toggle">
+                    <input type="checkbox" id="tutorialMode">
+                    <span>教程模式</span>
+                </label>
+            </div>
+            <div class="step-description-content" id="stepDescription">
+                等待算法执行...
+            </div>
+            <div class="ai-explanation" id="aiExplanation" style="display:none;">
+                <div class="ai-label">🤖 AI讲解:</div>
+                <div class="ai-text" id="aiExplanationText"></div>
+            </div>
+        </div>
+
+        <!-- 结果面板 -->
+        <div class="result-panel" id="resultPanel" style="display:none;">
+            <h4>📊 执行结果</h4>
+            <div id="resultContent"></div>
+        </div>
+    </main>
+
+    <!-- ===== 右侧边栏：控制 & AI对话 ===== -->
+    <aside class="sidebar sidebar-right" id="sidebarRight">
+        <!-- 控制面板 -->
+        <div class="sidebar-section">
+            <h3>🎮 执行控制</h3>
+            <div class="control-panel" id="controlPanel">
+                <div class="speed-control">
+                    <label>播放速度</label>
+                    <input type="range" id="speedSlider" min="0.5" max="5" step="0.5" value="1">
+                    <span id="speedLabel">1x</span>
+                </div>
+
+                <div class="control-buttons">
+                    <button class="ctrl-btn" id="btnStepBack" title="上一步" disabled>⏮</button>
+                    <button class="ctrl-btn" id="btnStep" title="单步执行" disabled>▶️</button>
+                    <button class="ctrl-btn" id="btnAutoPlay" title="自动播放" disabled>▶️▶️</button>
+                    <button class="ctrl-btn" id="btnPause" title="暂停" disabled>⏸</button>
+                    <button class="ctrl-btn" id="btnReset" title="重置" disabled>🔄</button>
+                </div>
+
+                <div class="step-jump">
+                    <label>跳转到步骤</label>
+                    <input type="number" id="stepJumpInput" min="0" value="0" disabled>
+                    <button class="btn btn-sm" id="btnJump" disabled>跳转</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果导出 -->
+        <div class="sidebar-section">
+            <h3>📤 导出</h3>
+            <button class="btn btn-outline btn-full" id="exportBtn" disabled>
+                📋 导出执行日志
+            </button>
+        </div>
+
+        <!-- AI 智能体对话框 -->
+        <div class="sidebar-section ai-chat-section">
+            <h3>🤖 AI智能助手 <span class="ai-badge">豆包大模型</span></h3>
+            <div class="ai-chat-container" id="aiChatContainer">
+                <div class="ai-chat-messages" id="aiChatMessages">
+                    <div class="ai-message ai-message-bot">
+                        <div class="ai-avatar">🤖</div>
+                        <div class="ai-content">
+                            你好！我是算法学习助手，基于豆包大模型。我可以帮你理解算法原理、分析执行步骤、回答算法相关问题。有什么想问的吗？
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-chat-input">
+                    <textarea id="aiInput" placeholder="输入你的问题..." rows="2"></textarea>
+                    <button class="btn btn-primary btn-sm" id="aiSendBtn">发送</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<!-- ==================== 算法对比视图 ==================== -->
+<div class="compare-view hidden" id="compareView">
+    <div class="compare-header">
+        <h3>⚔️ 算法对比</h3>
+        <span>算法A:</span>
+        <select id="compareAlgoA"><option value="">-- 选择算法 --</option></select>
+        <span>vs</span>
+        <span>算法B:</span>
+        <select id="compareAlgoB"><option value="">-- 选择算法 --</option></select>
+        <button class="btn btn-primary" id="compareRunBtn">开始对比</button>
+        <button class="btn btn-outline" id="compareCloseBtn">返回</button>
+    </div>
+    <div class="compare-canvases" id="compareCanvases">
+        <div class="compare-pane" id="compareLeft">
+            <h4>算法A</h4>
+            <div class="compare-viz"></div>
+            <div class="compare-info"></div>
+        </div>
+        <div class="compare-pane" id="compareRight">
+            <h4>算法B</h4>
+            <div class="compare-viz"></div>
+            <div class="compare-info"></div>
+        </div>
+    </div>
+    <div class="compare-controls">
+        <button class="btn" id="comparePlayBtn">▶️ 同步播放</button>
+        <button class="btn" id="compareResetBtn">🔄 重置</button>
+    </div>
+</div>
+
+<!-- ==================== 知识库视图 ==================== -->
+<div class="knowledge-view hidden" id="knowledgeView">
+    <div class="knowledge-layout">
+        <!-- 左侧目录 -->
+        <aside class="knowledge-sidebar">
+            <h3>📚 算法知识库</h3>
+            <div class="knowledge-nav" id="knowledgeNav">
+                <div class="knowledge-nav-item" data-algo-id="bubble_sort"><span class="kni-icon">🫧</span><div><div>冒泡排序</div><div class="kni-cat">排序算法 · 3道例题</div></div></div>
+                <div class="knowledge-nav-item" data-algo-id="quick_sort"><span class="kni-icon">⚡</span><div><div>快速排序</div><div class="kni-cat">排序算法 · 2道例题</div></div></div>
+                <div class="knowledge-nav-item" data-algo-id="mst"><span class="kni-icon">🕸️</span><div><div>Prim最小生成树</div><div class="kni-cat">图算法 · 2道例题</div></div></div>
+                <div class="knowledge-nav-item" data-algo-id="huffman"><span class="kni-icon">🌳</span><div><div>哈夫曼树</div><div class="kni-cat">树结构 · 2道例题</div></div></div>
+                <div class="knowledge-nav-item" data-algo-id="hanoi"><span class="kni-icon">🗼</span><div><div>汉诺塔</div><div class="kni-cat">递归 · 2道例题</div></div></div>
+                <div class="knowledge-nav-item" data-algo-id="graph_coloring"><span class="kni-icon">🎨</span><div><div>图着色</div><div class="kni-cat">回溯 · 2道例题</div></div></div>
+            </div>
+        </aside>
+        <!-- 右侧内容 -->
+        <main class="knowledge-content" id="knowledgeContent">
+            <div class="knowledge-placeholder">
+                <div style="font-size:64px;margin-bottom:16px;">📖</div>
+                <p>请从左侧目录中选择一个算法</p>
+                <p style="font-size:13px;color:#999;">查看算法原理、使用指南和例题解析</p>
+            </div>
+        </main>
+    </div>
+    <div class="knowledge-footer">
+        <button class="btn btn-outline" id="knowledgeCloseBtn">返回可视化</button>
+    </div>
+</div>
+
+<!-- ==================== 执行日志视图 ==================== -->
+<div class="history-view hidden" id="historyView">
+    <div class="history-header">
+        <h3>📋 执行日志</h3>
+        <select id="historyFilter">
+            <option value="">全部算法</option>
+            <option value="bubble_sort">冒泡排序</option>
+            <option value="mst">最小生成树</option>
+            <option value="huffman">哈夫曼树</option>
+            <option value="hanoi">汉诺塔</option>
+            <option value="graph_coloring">图着色</option>
+            <option value="quick_sort">快速排序</option>
+        </select>
+        <button class="btn btn-outline" id="exportAllBtn">📥 批量导出</button>
+        <button class="btn btn-outline" id="historyCloseBtn">返回</button>
+    </div>
+    <div class="history-table-container">
+        <table class="history-table" id="historyTable">
+            <thead>
+                <tr>
+                    <th>ID</th><th>算法</th><th>输入数据</th><th>步数</th>
+                    <th>耗时(ms)</th><th>时间</th><th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==================== Toast 提示 ==================== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/api.js"></script>
+<script src="js/visualization.js"></script>
+<script src="js/controls.js"></script>
+<script src="js/ai-chat.js"></script>
+<script src="js/compare.js"></script>
+<script src="js/knowledge.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
